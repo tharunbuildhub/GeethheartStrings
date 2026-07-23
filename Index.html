@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Letter From My Heart — Interactive Envelope Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0612;
+            --card-bg: rgba(22, 14, 38, 0.85);
+            --gold-primary: #ffd700;
+            --gold-glow: #f3d5a3;
+            --rose-pink: #ff6b8b;
+            --lavender: #c084fc;
+            --text-light: #ffffff;
+            --text-subtle: #e2d8f0;
+            --envelope-color: #1e1333;
+            --envelope-border: #d4af37;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Ambient Dynamic Background */
+        .bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 107, 139, 0.15) 0%, rgba(192, 132, 252, 0.08) 40%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -2;
+            animation: pulseGlow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.9; }
+        }
+
+        /* HEADER */
+        header {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            color: var(--gold-primary);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        header p {
+            color: var(--text-subtle);
+            font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+            margin-top: 8px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* MAIN CONTAINER */
+        .stage-container {
+            width: 100%;
+            max-width: 900px;
+            min-height: 520px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* -------------------------------------------------------------
+           SCENE 1: ENVELOPE STAGE 
+        ------------------------------------------------------------- */
+        .envelope-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            background: linear-gradient(145deg, #281945, #140b24);
+            border-radius: 12px;
+            border: 2px solid var(--envelope-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.2);
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+        }
+
+        .envelope-wrapper:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), 0 0 45px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Envelope Flap */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-top: 120px solid #36225c;
+            transform-origin: top;
+            transition: transform 0.6s ease;
+            z-index: 3;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        }
+
+        .envelope-wrapper.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        /* Wax Seal */
+        .wax-seal {
+            position: absolute;
+            top: 105px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 64px;
+            height: 64px;
+            background: radial-gradient(circle, #ff416c, #8a2387);
+            border-radius: 50%;
+            border: 2px solid var(--gold-primary);
+            box-shadow: 0 4px 15px rgba(255, 65, 108, 0.6), inset 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            z-index: 4;
+            transition: transform 0.3s ease, opacity 0.4s ease;
+            animation: pulseSeal 2s infinite alternate;
+        }
+
+        @keyframes pulseSeal {
+            0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 15px rgba(255, 65, 108, 0.6); }
+            100% { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+        }
+
+        .envelope-wrapper:hover .wax-seal {
+            transform: translate(-50%, -50%) scale(1.15) rotate(10deg);
+        }
+
+        .envelope-hint {
+            margin-top: 35px;
+            font-size: 1.1rem;
+            color: var(--gold-glow);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
+            animation: bounceText 2s infinite;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes bounceText {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* -------------------------------------------------------------
+           SCENE 2: CARD COLLECTION & READER
+        ------------------------------------------------------------- */
+        .cards-stage {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .cards-stage.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Navigation Tabs / Progress Dots */
+        .cards-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: var(--text-subtle);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-chip:hover {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--gold-primary);
+            border-color: var(--gold-primary);
+        }
+
+        .nav-chip.active {
+            background: linear-gradient(135deg, var(--rose-pink), var(--lavender));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 0 20px rgba(255, 107, 139, 0.5);
+            font-weight: 600;
+        }
+
+        /* MAIN CARD DISPLAY */
+        .card-view {
+            width: 100%;
+            max-width: 720px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid var(--gold-glow);
+            border-radius: 24px;
+            padding: clamp(30px, 5vw, 55px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(192, 132, 252, 0.15);
+            position: relative;
+            min-height: 380px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: scale(0.92) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            color: var(--gold-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-counter {
+            font-size: 0.85rem;
+            color: var(--lavender);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .card-body {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+            line-height: 1.9;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        .card-body p {
+            margin-bottom: 16px;
+        }
+
+        .card-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .emoji-pop {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            margin: 0 3px;
+        }
+
+        .emoji-pop:hover {
+            transform: scale(1.5) rotate(12deg);
+        }
+
+        .highlight {
+            color: var(--gold-primary);
+            font-weight: 600;
+        }
+
+        .signature-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.8rem;
+            color: var(--gold-primary);
+            text-align: right;
+            margin-top: 10px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* CARD CONTROLS */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 215, 0, 0.15);
+            padding-top: 20px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold-glow);
+            color: var(--gold-primary);
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: var(--gold-primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 25px var(--gold-primary);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* FLOATING INTERACTIVE SPARKLES & HEARTS */
+        .floating-element {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            animation: floatUp 1s forwards linear;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.8) rotate(20deg); }
+        }
+
+        /* MUSIC & AMBIENT CONTROLLER DOCK */
+        .dock {
+            position: fixed;
+            bottom: 25px;
+            background: rgba(18, 10, 32, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 40px;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .dock-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--gold-primary);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dock-btn:hover {
+            background: var(--gold-primary);
+            color: var(--bg-dark);
+            transform: scale(1.1);
+        }
+
+        .dock-btn.active {
+            background: var(--rose-pink);
+            color: #fff;
+            box-shadow: 0 0 15px var(--rose-pink);
+        }
+
+        .dock-label {
+            font-size: 0.8rem;
+            color: var(--text-subtle);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.8rem; }
+            .envelope-wrapper { width: 270px; height: 180px; }
+            .envelope-flap { border-left-width: 135px; border-right-width: 135px; border-top-width: 100px; }
+            .wax-seal { top: 90px; width: 54px; height: 54px; font-size: 1.4rem; }
+            .card-view { padding: 25px 20px; min-height: 420px; }
+            .card-body { font-size: 1.15rem; line-height: 1.7; }
+            .action-btn { padding: 10px 18px; font-size: 0.85rem; }
+            .nav-chip { padding: 6px 12px; font-size: 0.75rem; }
+            .dock { padding: 8px 16px; gap: 10px; }
+            .dock-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Layers -->
+    <div class="bg-glow"></div>
+    <canvas id="stars-canvas" class="bg-canvas"></canvas>
+
+    <!-- Header Section -->
+    <header>
+        <h1><span class="emoji-pop">💌</span> A Letter From My Heart <span class="emoji-pop">✨</span></h1>
+        <p>Unfold the letter to read what's inside my heart</p>
+    </header>
+
+    <!-- Stage Area -->
+    <div class="stage-container">
+
+        <!-- SCENE 1: ENVELOPE -->
+        <div id="envelope-stage" class="envelope-stage">
+            <div id="envelope" class="envelope-wrapper">
+                <div class="envelope-flap"></div>
+                <div class="wax-seal">💖</div>
+            </div>
+            <div class="envelope-hint">
+                <span>Click Seal To Open</span> <span style="font-size: 1.3rem;">✨</span>
+            </div>
+        </div>
+
+        <!-- SCENE 2: FOLDED CARDS READER -->
+        <div id="cards-stage" class="cards-stage">
+            
+            <!-- Category Chips / Navigation -->
+            <div class="cards-nav" id="cards-nav">
+                <!-- Chips generated dynamically -->
+            </div>
+
+            <!-- Card Frame -->
+            <div class="card-view" id="card-view">
+                <div>
+                    <div class="card-header">
+                        <div class="card-title" id="card-title">
+                            <!-- Card title injected here -->
+                        </div>
+                        <div class="card-counter" id="card-counter">
+                            <!-- e.g. Card 1 of 6 -->
+                        </div>
+                    </div>
+
+                    <div class="card-body" id="card-body">
+                        <!-- Paragraph content injected here -->
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button id="prev-btn" class="action-btn" disabled>
+                        <span>👈</span> Previous
+                    </button>
+                    <button id="next-btn" class="action-btn">
+                        Next <span>👉</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Floating Dock Controls -->
+    <div class="dock">
+        <span class="dock-label">Soundtrack</span>
+        <button id="music-btn" class="dock-btn" title="Toggle Peaceful Piano Music">🎵</button>
+        <button id="sparkle-btn" class="dock-btn" title="Send Heart Sparkles">✨</button>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // LETTER DATA organized into folded envelope chapters
+        // -------------------------------------------------------------
+        const letterChapters = [
+            {
+                id: 1,
+                title: "My Fears & Silent Nights",
+                icon: "🌙",
+                chipText: "1. Silent Fears 🌧️",
+                content: `
+                    <p>Sometimes, I wonder if I'm even capable of <span class="highlight">loving</span> <span class="emoji-pop">💖</span> someone again.</p>
+                    <p>Not because I don't want to, but because I'm scared. Scared of giving my whole <span class="highlight">heart</span> <span class="emoji-pop">🫀</span> to someone and not receiving the kind of love I quietly dream about. Scared that one day the feelings might fade, or worse, that you might get tired of me. <span class="emoji-pop">🥀</span></p>
+                    <p>What if my personality becomes too much? What if my flaws become reasons for you to leave? These thoughts stay with me every single day. <span class="emoji-pop">⚓</span></p>
+                    <p>There are nights when I smile in front of everyone, only to come back to my room and silently fall apart. No one sees those moments. <span class="emoji-pop">🌧️</span> No one hears the conversations I have with myself, trying to convince my heart that maybe one day, someone will love me the way I've always loved others.</p>
+                `
+            },
+            {
+                id: 2,
+                title: "Falling For You",
+                icon: "✨",
+                chipText: "2. Falling For You ✨",
+                content: `
+                    <p>I've spent so much of my life pretending I'm okay because I never wanted to become someone else's burden. But the truth is... sometimes I just want someone to notice that I'm not okay without me having to say a single word. <span class="emoji-pop">🍃</span></p>
+                    <p>And yet...</p>
+                    <p>Somehow, without even realizing it, <span class="highlight">I fell for you</span>. <span class="emoji-pop">💫</span></p>
+                    <p>I don't know exactly when it happened. I don't know everything about you. But deep inside my heart, there's a strange peace that tells me you're someone I can <span class="highlight">trust</span>. <span class="emoji-pop">🤝</span> I want to believe that you'll never betray my trust, never make me feel unwanted, and never choose someone else over me.</p>
+                `
+            },
+            {
+                id: 3,
+                title: "Healing & Trust",
+                icon: "🛡️",
+                chipText: "3. Healing & Trust 🛡️",
+                content: `
+                    <p>Because I've learned that the deepest wounds aren't always caused by strangers. <span class="emoji-pop">💔</span> Sometimes they're left by the people we trusted the most. That's why my heart hesitates before it believes. It isn't because it doubts you—it's because it's trying to protect the little pieces of itself that are still healing. <span class="emoji-pop">🩹</span></p>
+                    <p>I'm not looking for perfection.</p>
+                    <p>I'm simply looking for a man who <span class="highlight">chooses me</span> every single day. <span class="emoji-pop">🌹</span></p>
+                    <p>Someone who stands beside me proudly, supports my dreams, and never makes me feel like I'm asking for too much just because I need love. Someone who doesn't hesitate to hold my hand through every season of life. <span class="emoji-pop">🤝</span></p>
+                `
+            },
+            {
+                id: 4,
+                title: "My Sensitivity & Needs",
+                icon: "🕊️",
+                chipText: "4. Protecting My Heart 🕊️",
+                content: `
+                    <p>I <span class="highlight">hope</span> <span class="emoji-pop">⭐</span> that even when you're angry, you never let harsh words hurt me. I'm a very sensitive person. The words spoken in anger stay in my heart much longer than anyone realizes. I don't expect you to be perfect, but I hope you'll protect my heart instead of breaking it.</p>
+                    <p>Please never make me question where I stand in your life. Silence, distance, and mixed signals hurt me more than the truth ever could. <span class="emoji-pop">🌧️</span> Reassurance may seem like a small thing to you, but to someone who's afraid of being left behind, it means everything.</p>
+                    <p>If you already have these qualities, I know I'll be the happiest girl in the world. <span class="emoji-pop">👑</span><span class="emoji-pop">✨</span></p>
+                    <p>If you don't, I hope you'll be willing to grow with me, just as I would for you. Because love isn't about finding someone perfect—it's about <span class="highlight">choosing each other</span> enough to become better together. <span class="emoji-pop">🌱</span></p>
+                `
+            },
+            {
+                id: 5,
+                title: "The Little Things Matter",
+                icon: "📸",
+                chipText: "5. Little Details 📸",
+                content: `
+                    <p>The little things mean the most to me. <span class="emoji-pop">🌸</span></p>
+                    <p>Ask me if I've eaten. Ask me how my day was. Wonder where I am because you care, not because you doubt me. Celebrate my smallest moments. <span class="emoji-pop">🎉</span></p>
+                    <p>If I send you pictures, I secretly hope your gallery becomes a collection of us, because every photo I send carries a piece of my happiness. <span class="emoji-pop">🖼️</span><span class="emoji-pop">💖</span></p>
+                    <p>Remember the little details I tell you—the things I like, the things that scare me, the stories I've only shared with you. Those little moments tell me I matter to you.</p>
+                    <p>I don't need expensive gifts. <span class="emoji-pop">🎁</span> I don't need grand promises. I only want to feel <span class="highlight">safe</span>. To feel <span class="highlight">chosen</span>. To feel <span class="highlight">loved</span> without having to beg for it. <span class="emoji-pop">🏡</span></p>
+                `
+            },
+            {
+                id: 6,
+                title: "A Love That Feels Like Home",
+                icon: "🏠",
+                chipText: "6. Forever & Always 🏠",
+                content: `
+                    <p>I want to be the person you run to, not the one you slowly drift away from. I want to fall asleep knowing I was enough for someone—not because I was perfect, but because I was loved exactly as I am. <span class="emoji-pop">🌙</span></p>
+                    <p>If one day I become quiet, please don't assume I've stopped caring. Sometimes my silence is just my heart asking, <em>"Will you still choose me if I stop trying so hard?"</em> <span class="emoji-pop">🕊️</span></p>
+                    <p>Because after everything life has taught me, I've realized that I don't need a perfect love story. I just want a <span class="highlight">love that feels like home</span>. <span class="emoji-pop">🏠</span><span class="emoji-pop">❤️</span></p>
+                    <p>If I ever find that kind of love, I promise I'll protect it with everything I have. Because behind this smile is a girl who has survived more silent heartbreak than anyone knows... and all she's ever wanted was someone who would <span class="highlight">stay</span>.</p>
+                    <div class="signature-text">Forever Yours ❤️</div>
+                `
+            }
+        ];
+
+        let currentCardIndex = 0;
+
+        // DOM Elements
+        const envelopeStage = document.getElementById('envelope-stage');
+        const envelope = document.getElementById('envelope');
+        const cardsStage = document.getElementById('cards-stage');
+        const cardsNav = document.getElementById('cards-nav');
+        const cardTitle = document.getElementById('card-title');
+        const cardCounter = document.getElementById('card-counter');
+        const cardBody = document.getElementById('card-body');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const cardView = document.getElementById('card-view');
+
+        // -------------------------------------------------------------
+        // ENVELOPE UNLOCK LOGIC
+        // -------------------------------------------------------------
+        envelope.addEventListener('click', () => {
+            envelope.classList.add('open');
+            triggerSparklesAround(envelope);
+
+            setTimeout(() => {
+                envelopeStage.style.opacity = '0';
+                envelopeStage.style.transform = 'scale(0.8)';
+                
+                setTimeout(() => {
+                    envelopeStage.style.display = 'none';
+                    cardsStage.classList.add('active');
+                    renderNavigation();
+                    loadCard(0);
+                    // Start soothing audio synth
+                    if (!audioPlaying) toggleAudio();
+                }, 600);
+            }, 700);
+        });
+
+        // -------------------------------------------------------------
+        // CARD NAVIGATION & RENDERING
+        // -------------------------------------------------------------
+        function renderNavigation() {
+            cardsNav.innerHTML = '';
+            letterChapters.forEach((chapter, idx) => {
+                const chip = document.createElement('button');
+                chip.className = `nav-chip ${idx === currentCardIndex ? 'active' : ''}`;
+                chip.innerHTML = chapter.chipText;
+                chip.addEventListener('click', () => {
+                    if (currentCardIndex !== idx) {
+                        loadCard(idx);
+                    }
+                });
+                cardsNav.appendChild(chip);
+            });
+        }
+
+        function loadCard(index) {
+            currentCardIndex = index;
+            const chapter = letterChapters[index];
+
+            // Re-trigger card animation
+            cardView.style.animation = 'none';
+            cardView.offsetHeight; // force reflow
+            cardView.style.animation = 'cardAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+            cardTitle.innerHTML = `<span>${chapter.icon}</span> ${chapter.title}`;
+            cardCounter.textContent = `Card ${index + 1} of ${letterChapters.length}`;
+            cardBody.innerHTML = chapter.content;
+
+            // Update Nav Chips
+            document.querySelectorAll('.nav-chip').forEach((chip, i) => {
+                chip.classList.toggle('active', i === index);
+            });
+
+            // Update Buttons State
+            prevBtn.disabled = index === 0;
+            if (index === letterChapters.length - 1) {
+                nextBtn.innerHTML = `Finish <span>❤️</span>`;
+            } else {
+                nextBtn.innerHTML = `Next <span>👉</span>`;
+            }
+
+            // Burst sparkles on card switch
+            triggerSparklesAround(cardView);
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentCardIndex > 0) loadCard(currentCardIndex - 1);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < letterChapters.length - 1) {
+                loadCard(currentCardIndex + 1);
+            } else {
+                // Celebration burst at the end
+                burstHeartsAndSparkles();
+            }
+        });
+
+        // -------------------------------------------------------------
+        // SPARKLES & HEART PARTICLES LOGIC
+        // -------------------------------------------------------------
+        function createSparkle(x, y, char = '✨') {
+            const el = document.createElement('span');
+            el.className = 'floating-element';
+            el.textContent = char;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+
+            const dx = (Math.random() - 0.5) * 120;
+            const dy = -Math.random() * 150 - 50;
+            el.style.setProperty('--dx', `${dx}px`);
+            el.style.setProperty('--dy', `${dy}px`);
+
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function triggerSparklesAround(element) {
+            const rect = element.getBoundingClientRect();
+            for (let i = 0; i < 10; i++) {
+                const x = rect.left + Math.random() * rect.width;
+                const y = rect.top + Math.random() * rect.height;
+                const icons = ['✨', '💖', '💫', '🌸'];
+                createSparkle(x, y, icons[Math.floor(Math.random() * icons.length)]);
+            }
+        }
+
+        function burstHeartsAndSparkles() {
+            const icons = ['💖', '❤️', '✨', '🌹', '💫', '🕊️'];
+            for (let i = 0; i < 35; i++) {
+                setTimeout(() => {
+                    const x = window.innerWidth / 2 + (Math.random() - 0.5) * 300;
+                    const y = window.innerHeight / 2 + (Math.random() - 0.5) * 200;
+                    createSparkle(x, y, icons[Math.floor(Math.random() * icons.length)]);
+                }, i * 40);
+            }
+        }
+
+        document.getElementById('sparkle-btn').addEventListener('click', burstHeartsAndSparkles);
+
+        // Click anywhere particle explosion
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.dock') || e.target.closest('.action-btn') || e.target.closest('.nav-chip')) return;
+            createSparkle(e.clientX, e.clientY, Math.random() > 0.5 ? '💖' : '✨');
+        });
+
+        // -------------------------------------------------------------
+        // HIGH-QUALITY AMBIENT AUDIO SYNTHESIZER (No external file needed)
+        // -------------------------------------------------------------
+        let audioCtx = null;
+        let audioPlaying = false;
+        let isMuted = false;
+        let synthInterval = null;
+
+        const musicBtn = document.getElementById('music-btn');
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Beautiful meditative piano-like pentatonic chords
+        const pianoNotes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+
+        function playPianoTone(freq, duration = 3) {
+            if (!audioCtx || isMuted) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function startAmbientSoundtrack() {
+            initAudio();
+            audioPlaying = true;
+            musicBtn.classList.add('active');
+
+            // Play gentle chord progression
+            synthInterval = setInterval(() => {
+                if (!audioPlaying || isMuted) return;
+                const note1 = pianoNotes[Math.floor(Math.random() * 4)];
+                const note2 = pianoNotes[Math.floor(Math.random() * 4) + 4];
+                playPianoTone(note1, 4);
+                setTimeout(() => playPianoTone(note2, 3.5), 600);
+            }, 2500);
+        }
+
+        function stopAmbientSoundtrack() {
+            audioPlaying = false;
+            musicBtn.classList.remove('active');
+            if (synthInterval) clearInterval(synthInterval);
+        }
+
+        function toggleAudio() {
+            if (audioPlaying) {
+                stopAmbientSoundtrack();
+            } else {
+                startAmbientSoundtrack();
+            }
+        }
+
+        musicBtn.addEventListener('click', toggleAudio);
+
+        // -------------------------------------------------------------
+        // CANVAS STARFIELD BACKGROUND
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('stars-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, stars = [];
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            stars = Array.from({ length: 80 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 1.8 + 0.5,
+                alpha: Math.random(),
+                speed: Math.random() * 0.008 + 0.002
+            }));
+        }
+
+        function renderStars() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0.2) star.speed = -star.speed;
+                ctx.fillStyle = `rgba(255, 215, 0, ${Math.abs(star.alpha) * 0.7})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(renderStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        renderStars();
+    </script>
+</body>
+</html>
